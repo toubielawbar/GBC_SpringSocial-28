@@ -1,0 +1,84 @@
+version: '3.8'
+
+services:
+  user-service:
+    image: user-service
+    ports:
+      - "8082:8082"
+    build:
+      context: ./user-service
+      dockerfile: ./Dockerfile
+    container_name: user-service
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+#      eureka.client.serviceUrl.defaultZone: http://discovery-service:8760/eureka
+    depends_on:
+      - postgres-user
+    networks:
+      - spring
+
+  post-service:
+    image: post-service
+    ports:
+      - "8084:8084"
+    build:
+      context: ./post-service
+      dockerfile: ./Dockerfile
+    container_name: post-service
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    #      eureka.client.serviceUrl.defaultZone: http://discovery-service:8760/eureka
+    depends_on:
+      - postgres-post
+    networks:
+      - spring
+
+  pgadmin:
+    image: dpage/pgadmin4
+    restart: unless-stopped
+    ports:
+      - "8888:80"
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=user@domain.ca
+      - PGADMIN_DEFAULT_PASSWORD=password
+    container_name: pgadmin-multiple-gbc
+    networks:
+      - spring
+
+  postgres-user:
+    image: postgres
+    ports:
+      - "5434:5432"
+    environment:
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=user-service
+    volumes:
+      - ./data/postgres/user-service:/data/postgres
+      - ./init/postgres/user-service/init.sql:/docker-entrypoint-initdb.d/init.sql
+    container_name: postgres-user
+    restart: unless-stopped
+    networks:
+      - spring
+
+  
+  postgres-post:
+    image: postgres
+    ports:
+      - "5433:5432"
+    environment:
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=post-service
+    volumes:
+      - ./data/postgres/post-service:/data/postgres
+      - ./init/postgres/post-service/init.sql:/docker-entrypoint-initdb.d/init.sql
+    container_name: postgres-post
+    restart: unless-stopped
+    networks:
+      - spring
+
+
+networks:
+  spring:
+    driver: bridge
