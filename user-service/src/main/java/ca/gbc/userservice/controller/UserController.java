@@ -3,7 +3,6 @@ package ca.gbc.userservice.controller;
 import ca.gbc.userservice.dto.UserRequest;
 import ca.gbc.userservice.dto.UserResponse;
 import ca.gbc.userservice.model.User;
-import ca.gbc.userservice.repository.UserRepository;
 import ca.gbc.userservice.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -31,7 +30,17 @@ public class UserController {
     }
 
     // read user
+    @GetMapping("/{username}")
+    @ResponseStatus(HttpStatus.OK)
+    public ResponseEntity<UserResponse> getUser(@PathVariable String username) {
+        UserResponse userResponse = userService.getUserByUsername(username);
 
+        if (userResponse != null) {
+            return new ResponseEntity<>(userResponse, HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+    }
 
     // update user
     @PutMapping("/{userId}")

@@ -32,7 +32,7 @@ public class UserService implements IUserService {
         // Save the user to the database
         User savedUser = userRepository.save(user);
 
-        log.info("User {} is saved with ID: {}", savedUser.getName(), savedUser.getId());
+        log.info("User {} is saved with ID: {}", savedUser.getName(), savedUser.getUserId());
 
         return savedUser;
     }
@@ -51,7 +51,7 @@ public class UserService implements IUserService {
     private UserResponse mapToUserResponse(User user){
 
         return UserResponse.builder()
-                .id(user.getId())
+                .userId(user.getUserId())
                 .name(user.getName())
                 .username(user.getUsername())
                 .email(user.getEmail())
@@ -65,7 +65,20 @@ public class UserService implements IUserService {
         Optional<User> userID = userRepository.findById(userId);
         if (userID.isPresent()) {
             User user = userID.get();
-            return new UserResponse(user.getId(), user.getName(), user.getUsername(), user.getEmail());
+            return new UserResponse(user.getUserId(), user.getName(), user.getUsername(), user.getEmail());
+        } else {
+            return new UserResponse();
+        }
+    }
+
+    @Override
+    public UserResponse getUserByUsername(String username) {
+        log.info("Getting user with username {}", username);
+
+        Optional<User> uname = userRepository.findByUsername(username);
+        if (uname.isPresent()) {
+            User user = uname.get();
+            return new UserResponse(user.getUserId(), user.getName(), user.getUsername(), user.getEmail());
         } else {
             return new UserResponse();
         }
@@ -84,10 +97,10 @@ public class UserService implements IUserService {
             user.setUsername(userRequest.getUsername());
             user.setEmail(userRequest.getEmail());
 
-            log.info("User {} is updated",user.getId());
+            log.info("User {} is updated",user.getUserId());
 
             userRepository.save(user);
-            return user.getId();
+            return user.getUserId();
         } else {
             return userId;
         }

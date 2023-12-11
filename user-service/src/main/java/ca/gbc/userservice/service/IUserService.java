@@ -10,6 +10,7 @@ public interface IUserService {
     User createUser(UserRequest userRequest);
     List<UserResponse> getAllUsers();
     UserResponse getUserById(Long userId);
+    UserResponse getUserByUsername(String username);
     Long updateUser(Long userId, UserRequest userRequest);
     void deleteUser(Long userId);
 }

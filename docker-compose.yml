@@ -11,7 +11,7 @@ services:
     container_name: user-service
     environment:
       SPRING_PROFILES_ACTIVE: docker
-#      eureka.client.serviceUrl.defaultZone: http://discovery-service:8760/eureka
+      eureka.client.serviceUrl.defaultZone: http://discovery-service:8760/eureka
     depends_on:
       - postgres-user
     networks:
@@ -27,7 +27,7 @@ services:
     container_name: post-service
     environment:
       SPRING_PROFILES_ACTIVE: docker
-    #      eureka.client.serviceUrl.defaultZone: http://discovery-service:8760/eureka
+      eureka.client.serviceUrl.defaultZone: http://discovery-service:8760/eureka
     depends_on:
       - postgres-post
     networks:
@@ -61,7 +61,7 @@ services:
     networks:
       - spring
 
-  
+
   postgres-post:
     image: postgres
     ports:
@@ -78,6 +78,19 @@ services:
     networks:
       - spring
 
+
+  discovery-service:
+    image: discovery-service
+    ports:
+      - "8760:8760"
+    build:
+      context: ./discovery-service
+      dockerfile: ./Dockerfile
+    container_name: discovery-service
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    networks:
+      - spring
 
 networks:
   spring:

@@ -1,4 +1,4 @@
-package ca.gbc.userservice.dto;
+package ca.gbc.postservice.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -12,6 +12,5 @@ import lombok.NoArgsConstructor;
 public class UserResponse {
     private Long userId;
     private String name;
-    private String username;
     private String email;
 }

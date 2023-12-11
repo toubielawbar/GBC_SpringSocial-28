@@ -1,10 +1,13 @@
 package ca.gbc.postservice.model;
 
+import ca.gbc.postservice.dto.UserResponse;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+
+import java.util.List;
 
 @Entity
 @Table(name = "t_post")
@@ -17,5 +20,6 @@ public class Post {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String postContent;
-    private Long userId;
+    private String username;
+
 }
