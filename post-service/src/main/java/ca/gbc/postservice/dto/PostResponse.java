@@ -16,4 +16,5 @@ public class PostResponse {
     private String postContent;
     private String username;
     private List<UserResponse> userDetails;
+    private List<CommentResponse> postComments;
 }

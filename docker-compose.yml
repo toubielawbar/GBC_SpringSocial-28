@@ -1,22 +1,6 @@
 version: '3.8'
 
 services:
-  user-service:
-    image: user-service
-    ports:
-      - "8082:8082"
-    build:
-      context: ./user-service
-      dockerfile: ./Dockerfile
-    container_name: user-service
-    environment:
-      SPRING_PROFILES_ACTIVE: docker
-      eureka.client.serviceUrl.defaultZone: http://discovery-service:8760/eureka
-    depends_on:
-      - postgres-user
-    networks:
-      - spring
-
   post-service:
     image: post-service
     ports:
@@ -33,39 +17,99 @@ services:
     networks:
       - spring
 
-  pgadmin:
-    image: dpage/pgadmin4
-    restart: unless-stopped
+  user-service:
+    image: user-service
     ports:
-      - "8888:80"
+      - "8082:8082"
+    build:
+      context: ./user-service
+      dockerfile: ./Dockerfile
+    container_name: user-service
     environment:
-      - PGADMIN_DEFAULT_EMAIL=user@domain.ca
-      - PGADMIN_DEFAULT_PASSWORD=password
-    container_name: pgadmin-multiple-gbc
+      SPRING_PROFILES_ACTIVE: docker
+      eureka.client.serviceUrl.defaultZone: http://discovery-service:8760/eureka
+    depends_on:
+      - postgres-user
     networks:
       - spring
 
-  postgres-user:
-    image: postgres
+
+  comment-service:
+    image: comment-service
     ports:
-      - "5434:5432"
+      - "8086:8086"
+    build:
+      context: ./comment-service
+      dockerfile: ./Dockerfile
+    container_name: comment-service
     environment:
-      - POSTGRES_USER=admin
-      - POSTGRES_PASSWORD=password
-      - POSTGRES_DB=user-service
+      SPRING_PROFILES_ACTIVE: docker
+      eureka.client.serviceUrl.defaultZone: http://discovery-service:8760/eureka
+    depends_on:
+      - postgres-comment
+    networks:
+      - spring
+
+  friendship-service:
+    image: friendship-service
+    ports:
+      - "8088:8088"
+    build:
+      context: ./friendship-service
+      dockerfile: ./Dockerfile
+    container_name: friendship-service
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      eureka.client.serviceUrl.defaultZone: http://discovery-service:8760/eureka
+    depends_on:
+      - postgres-friendship
+    networks:
+      - spring
+
+  keycloak:
+    image: jboss/keycloak
+    ports:
+      - "8080:8080"
+    environment:
+      JBOSS_LOG_MANAGER_ROOT_LOGGER: DEBUG
+      DB_VENDOR: POSTGRES
+      DB_ADDR: postgres-keycloak
+      DB_DATABASE: keycloak
+      DB_USER: keycloak
+      DB_PASSWORD: password
+      KEYCLOAK_USER: admin
+      KEYCLOAK_PASSWORD: password
+      KEYCLOAK_IMPORT: /opt/jboss/keycloak/realm/spring-boot-microservices-realm.json
     volumes:
-      - ./data/postgres/user-service:/data/postgres
-      - ./init/postgres/user-service/init.sql:/docker-entrypoint-initdb.d/init.sql
-    container_name: postgres-user
+      - ./realms/:/opt/jboss/keycloak/realm
+    container_name: keycloak
+    depends_on:
+      - postgres-keycloak
     restart: unless-stopped
     networks:
       - spring
+
+
+
+  discovery-service:
+    image: discovery-service
+    ports:
+      - "8760:8760"
+    build:
+      context: ./discovery-service
+      dockerfile: ./Dockerfile
+    container_name: discovery-service
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    networks:
+      - spring
+
 
 
   postgres-post:
     image: postgres
     ports:
-      - "5433:5432"
+      - "5434:5432"
     environment:
       - POSTGRES_USER=admin
       - POSTGRES_PASSWORD=password
@@ -79,16 +123,110 @@ services:
       - spring
 
 
-  discovery-service:
-    image: discovery-service
+
+  postgres-user:
+    image: postgres
     ports:
-      - "8760:8760"
+      - "5436:5432"
+    environment:
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=user-service
+    volumes:
+      - ./data/postgres/user-service:/data/postgres
+      - ./init/postgres/user-service/init.sql:/docker-entrypoint-initdb.d/init.sql
+    container_name: postgres-user
+    restart: unless-stopped
+    networks:
+      - spring
+
+
+  postgres-comment:
+    image: postgres
+    ports:
+      - "5435:5432"
+    environment:
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=comment-service
+    volumes:
+      - ./data/postgres/comment-service:/data/postgres
+      - ./init/postgres/comment-service/init.sql:/docker-entrypoint-initdb.d/init.sql
+    container_name: postgres-comment
+    restart: unless-stopped
+    networks:
+      - spring
+
+
+  postgres-friendship:
+    image: postgres
+    ports:
+      - "5437:5432"
+    environment:
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=friendship-service
+    volumes:
+      - ./data/postgres/friendship-service:/data/postgres
+      - ./init/postgres/friendship-service/init.sql:/docker-entrypoint-initdb.d/init.sql
+    container_name: postgres-friendship
+    restart: unless-stopped
+    networks:
+      - spring
+
+
+
+  postgres-keycloak:
+    image: postgres
+    ports:
+      - "5431:5432"
+    environment:
+      POSTGRES_DB: keycloak
+      POSTGRES_USER: keycloak
+      POSTGRES_PASSWORD: password
+      PBDATA: /data/postgres
+    volumes:
+      - ./data/postgres/postgres-keycloak:/data/postgres
+    container_name: postgres-keycloak
+    restart: unless-stopped
+    networks:
+      - spring
+
+  pgadmin:
+    image: dpage/pgadmin4
+    restart: unless-stopped
+    ports:
+      - "8888:80"
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=user@domain.ca
+      - PGADMIN_DEFAULT_PASSWORD=password
+    container_name: pgadmin-multiple-gbc
+    networks:
+      - spring
+
+
+
+  zipkin-service:
+    image: openzipkin/zipkin
+    ports:
+      - "9411:9411"
+    container_name: zipkin
+    restart: unless-stopped
+    networks:
+      - spring
+
+  api-gateway:
+    image: api-gateway
+    ports:
+      - "8182:8182"
     build:
-      context: ./discovery-service
+      context: ./api-gateway
       dockerfile: ./Dockerfile
-    container_name: discovery-service
+    container_name: api-gateway
     environment:
       SPRING_PROFILES_ACTIVE: docker
+      eureka.client.serviceUrl.defaultZone: http://discovery-service:8760/eureka
+    restart: unless-stopped
     networks:
       - spring
 

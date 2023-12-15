@@ -21,5 +21,4 @@ public class Post {
     private Long id;
     private String postContent;
     private String username;
-
 }

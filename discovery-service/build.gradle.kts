@@ -19,9 +19,13 @@ extra["springCloudVersion"] = "2023.0.0"
 
 dependencies {
 	implementation("org.springframework.boot:spring-boot-starter")
-	implementation("org.springframework.boot:spring-boot-starter-security:3.1.5")
-	implementation("org.springframework.cloud:spring-cloud-starter-netflix-eureka-client")
+	implementation("org.springframework.boot:spring-boot-starter-security:3.2.0")
+	implementation("org.springframework.cloud:spring-cloud-starter-netflix-eureka-server:4.1.0")
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
+	implementation("org.springframework.boot:spring-boot-starter-actuator")
+	implementation("io.micrometer:micrometer-observation:1.12.0")
+	implementation("io.micrometer:micrometer-tracing-bridge-brave:1.2.0")
+	implementation("io.zipkin.reporter2:zipkin-reporter-brave:2.16.4")
 }
 
 dependencyManagement {

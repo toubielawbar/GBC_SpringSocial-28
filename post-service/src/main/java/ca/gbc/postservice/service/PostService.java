@@ -1,5 +1,6 @@
 package ca.gbc.postservice.service;
 
+import ca.gbc.postservice.dto.CommentResponse;
 import ca.gbc.postservice.dto.PostRequest;
 import ca.gbc.postservice.dto.PostResponse;
 import ca.gbc.postservice.dto.UserResponse;
@@ -9,9 +10,12 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -26,6 +30,9 @@ public class PostService implements IPostService {
     private final WebClient webClient;
     @Value("${user.service.url}")
     private String userApiUri;
+
+    @Value("${comment.service.url}")
+    private String commentApiUri;
     @Override
     public Post createPost(PostRequest postRequest) {
         log.info("Creating a new post {}", postRequest.getPostContent());
@@ -61,6 +68,16 @@ public class PostService implements IPostService {
                 .block();
     }
 
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public List<CommentResponse> getCommentsByPostId(Long postId) {
+        return webClient.get()
+                .uri(commentApiUri+"/{postId}", postId)
+                .retrieve()
+                .bodyToFlux(CommentResponse.class)
+                .collectList()
+                .block();
+    }
+
     @Override
     public List<PostResponse> getAllPosts() {
         log.info("Returning a list of posts");
@@ -74,15 +91,22 @@ public class PostService implements IPostService {
     }
 
     private PostResponse mapToPostResponse(Post post){
+        // Get user details based on the post's username
         List<UserResponse> userDetails = getUserByUsername(post.getUsername());
 
+        // Get comments for the post based on its ID
+        List<CommentResponse> postComment = getCommentsByPostId(post.getId());
+
+        // Build and return the PostResponse DTO
         return PostResponse.builder()
                 .id(post.getId())
                 .postContent(post.getPostContent())
                 .username(post.getUsername())
                 .userDetails(userDetails)
+                .postComments(postComment != null ? postComment : new ArrayList<>())
                 .build();
     }
+
 
     @Override
     public PostResponse getPostById(Long postId) {
@@ -92,7 +116,8 @@ public class PostService implements IPostService {
         if (postID.isPresent()) {
             Post post = postID.get();
             List<UserResponse> userDetails = getUserByUsername(post.getUsername());
-            return new PostResponse(post.getId(), post.getPostContent(), post.getUsername(), userDetails);
+            List<CommentResponse> postComment = getCommentsByPostId(post.getId());
+            return new PostResponse(post.getId(), post.getPostContent(), post.getUsername(), userDetails, postComment);
         } else {
             return new PostResponse();
         }
